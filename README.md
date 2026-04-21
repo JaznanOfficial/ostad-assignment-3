@@ -136,6 +136,24 @@ If you want, I can now:
 
 ---
 
+## Screenshots
+
+Below are the screenshots from the `public/images` folder included in this repo. Click to open each image.
+
+![1](public/images/1.png)
+![2](public/images/2.png)
+![3](public/images/3.png)
+![4](public/images/4.png)
+![5](public/images/5.png)
+![6](public/images/6.png)
+![7](public/images/7.png)
+![8](public/images/8.png)
+![9](public/images/9.png)
+![10](public/images/10.png)
+![11](public/images/11.png)
+
+---
+
 ## Access & Behavior Notes
 
 - The site is available at: `https://3.113.11.74/` (no `:3000` shown in the browser). Nginx listens on `443` and proxies requests internally to the Node process on `localhost:3000`, so users never see port `3000`.
