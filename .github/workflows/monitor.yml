@@ -1,0 +1,77 @@
+name: Build & Deploy Next-Japan App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+
+  # -----------------------------
+  # 1️⃣ BUILD & PUSH DOCKER IMAGE
+  # -----------------------------
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build & Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: arif0ahammed0reza/next-japan:latest
+
+
+  # -----------------------------
+  # 2️⃣ DEPLOY TO EC2 SERVER
+  # -----------------------------
+  deploy:
+    runs-on: ostad   # self-hosted runner
+    needs: build     # wait for Docker image build to finish
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Connect to EC2 and Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "🔐 Connected to EC2"
+
+            echo "🐳 Checking Docker installation"
+            if ! command -v docker &> /dev/null; then
+              curl -fsSL https://get.docker.com -o get-docker.sh
+              sh get-docker.sh
+            fi
+
+            echo "🔐 Logging in to Docker Hub"
+            echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+            echo "🧼 Stopping old container"
+            sudo docker stop next-japan || true
+            sudo docker rm next-japan || true
+
+            echo "📥 Pulling latest image"
+            sudo docker pull arif0ahammed0reza/next-japan:latest
+
+            echo "🚀 Starting container"
+            sudo docker run -d \
+              --name next-japan \
+              -p 80:3000 \
+              arif0ahammed0reza/next-japan:latest
